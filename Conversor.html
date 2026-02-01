@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conversor con Comisión</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 16px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 420px;
+      margin: auto;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    .result {
+      margin-top: 12px;
+      padding: 8px;
+      background: #f0f0f0;
+      border-radius: 6px;
+    }
+    .toggle {
+      margin-top: 12px;
+      cursor: pointer;
+      font-size: 18px;
+      user-select: none;
+    }
+    .advanced {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Conversor de precios</h2>
+
+    <label>Moneda original</label>
+    <select id="baseCurrency">
+      <option value="UYU">Pesos (UYU)</option>
+      <option value="USD">Dólares (USD)</option>
+      <option value="EUR">Euros (EUR)</option>
+    </select>
+
+    <label>Precio</label>
+    <input type="number" id="amount" placeholder="Ingrese el monto" />
+
+    <div class="result" id="results"></div>
+
+    <div class="toggle" onclick="toggleAdvanced()">➕ Opciones avanzadas</div>
+
+    <div class="advanced" id="advanced">
+      <label>Tasa Pesos → Dólares</label>
+      <input type="number" id="uyuToUsd" step="0.01" />
+
+      <label>Tasa Pesos → Euros</label>
+      <input type="number" id="uyuToEur" step="0.01" />
+
+      <label>Comisión tarjeta de crédito (%)</label>
+      <input type="number" id="commission" step="0.1" />
+    </div>
+  </div>
+
+  <script>
+    // Valores por defecto
+    let rates = {
+      uyuToUsd: parseFloat(localStorage.getItem('uyuToUsd')) || 39.5,
+  uyuToEur: parseFloat(localStorage.getItem('uyuToEur')) || 43.0
+};
+
+    let commissionPercent =
+  parseFloat(localStorage.getItem('commissionPercent')) || 3.5;
+
+    const amountInput = document.getElementById('amount');
+    const baseCurrencySelect = document.getElementById('baseCurrency');
+    const resultsDiv = document.getElementById('results');
+
+    const uyuToUsdInput = document.getElementById('uyuToUsd');
+    const uyuToEurInput = document.getElementById('uyuToEur');
+    const commissionInput = document.getElementById('commission');
+
+    uyuToUsdInput.value = rates.uyuToUsd;
+    uyuToEurInput.value = rates.uyuToEur;
+    commissionInput.value = commissionPercent;
+
+    function convert() {
+      const amount = parseFloat(amountInput.value);
+      if (isNaN(amount)) {
+        resultsDiv.innerHTML = '';
+        return;
+      }
+
+      const base = baseCurrencySelect.value;
+      let uyuAmount;
+
+      if (base === 'UYU') uyuAmount = amount;
+      if (base === 'USD') uyuAmount = amount * rates.uyuToUsd;
+      if (base === 'EUR') uyuAmount = amount * rates.uyuToEur;
+
+      const usd = uyuAmount / rates.uyuToUsd;
+      const eur = uyuAmount / rates.uyuToEur;
+
+      const commissionUyu = uyuAmount * (commissionPercent / 100);
+
+      resultsDiv.innerHTML = `
+        <div>Pesos (UYU): $${uyuAmount.toFixed(2)}</div>
+        <div>Dólares (USD): USD ${usd.toFixed(2)}</div>
+        <div>Euros (EUR): EUR ${eur.toFixed(2)}</div>
+        <hr />
+        <div>Comisión tarjeta (en pesos): $${commissionUyu.toFixed(2)}</div>
+      `;
+    }
+
+    function toggleAdvanced() {
+      const adv = document.getElementById('advanced');
+      const toggle = document.querySelector('.toggle');
+      if (adv.style.display === 'none' || adv.style.display === '') {
+        adv.style.display = 'block';
+        toggle.textContent = '➖ Ocultar opciones avanzadas';
+      } else {
+        adv.style.display = 'none';
+        toggle.textContent = '➕ Opciones avanzadas';
+      }
+    }
+
+    uyuToUsdInput.addEventListener('input', () => {
+  rates.uyuToUsd = parseFloat(uyuToUsdInput.value) || rates.uyuToUsd;
+  localStorage.setItem('uyuToUsd', rates.uyuToUsd);
+  convert();
+});
+
+    uyuToEurInput.addEventListener('input', () => {
+  rates.uyuToEur = parseFloat(uyuToEurInput.value) || rates.uyuToEur;
+  localStorage.setItem('uyuToEur', rates.uyuToEur);
+  convert();
+});
+
+    commissionInput.addEventListener('input', () => {
+  commissionPercent = parseFloat(commissionInput.value) || commissionPercent;
+  localStorage.setItem('commissionPercent', commissionPercent);
+  convert();
+});
+
+    amountInput.addEventListener('input', convert);
+    baseCurrencySelect.addEventListener('change', convert);
+  </script>
+</body>
+</html>
